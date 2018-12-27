@@ -18,7 +18,26 @@ log.pred[log.probs>0.5]="Patient"
 table(log.pred,YNClassification)
 mean(log.pred==YNClassification)
 
-# Use a train and a test set ? 
+# Using a train and a test set
+
+## 75% of the sample size
+smp_size <- floor(0.75 * nrow(dataset))
+
+set.seed(123)
+train_ind <- sample(seq_len(nrow(dataset)), size = smp_size)
+train <- dataset[train_ind, ]
+train_bool = rep(FALSE,nrow(dataset))
+train_bool[train_ind]=TRUE
+test <- dataset[-train_ind, ]
+
+log2.fit=glm(YNClassification ~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,data=dataset,family = binomial,subset=train_bool)
+summary(log2.fit)
+log2.probs=predict(log2.fit,newdata = test,type="response")
+log2.pred=rep("Healthy control",nrow(test))
+log2.pred[log2.probs>0.5]="Patient"
+table(log2.pred,test$Classification)
+mean(log2.pred==test$Classification) 
+mean(log2.pred!=test$Classification) # pourquoi il n'y a pas d'erreur? 
 
 # Model selection for logistic regression : 
 # Use model selection methods to select a pertinent 
