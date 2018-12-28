@@ -73,6 +73,14 @@ plot(c(1,10,50,100,150,200,250),test.error)
 
 ### LDA
 
+library(MASS)
+lda.fit=lda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1)
+lda.pred=predict(lda.fit)
+lda.pred$posterior[,1]
+
+library(pROC)
+ROC.lda=roc(YNClassification,lda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
+plot.roc(ROC.lda,print.auc =T,xlab="Specificity",col="red",axes=T)
 
 
 ### QDA
