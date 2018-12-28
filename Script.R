@@ -1,3 +1,9 @@
+library(pROC)
+library("e1071")
+library(class)
+library(tree)
+library(MASS)
+
 ### Exploratory analysis of the data set
 dataset=read.table(file = 'dataR2.csv',header = T, sep=",")
 attach(dataset)
@@ -15,7 +21,10 @@ log.probs[1:10] # To visualize the first 10 values.
 contrasts(YNClassification) 
 log.pred=rep("Healthy control",nrow(dataset))
 log.pred[log.probs>0.5]="Patient"
+
+#Confusion matrix
 table(log.pred,YNClassification)
+#Accuracy
 mean(log.pred==YNClassification)
 
 # Using a train and a test set
@@ -37,8 +46,10 @@ log2.pred=rep("Healthy control",nrow(test))
 log2.pred[log2.probs>0.5]="Patient"
 
 test$YNClassification <- factor(test$Classification, levels=c(1,2), labels=c("Healthy control","Patient" ))
+#Confusion matrix
 table(log2.pred,test$YNClassification)
-mean(log2.pred==test$YNClassification) 
+#Accuracy
+mean(log2.pred==test$YNClassification)
 mean(log2.pred!=test$YNClassification)
 
 # Model selection for logistic regression : 
@@ -49,17 +60,19 @@ mean(log2.pred!=test$YNClassification)
 
 ### KNN
 
-library(class)
 
-#TODO: standarize data + use all predictors, not only Glucosea
+#TODO: standarize data ?
 
-train.X=as.matrix(Glucose[train_bool])
-test.X=as.matrix(Glucose[!train_bool])
+train.X= as.matrix(train[,-c(11,10)])
+test.X= as.matrix(test[,-c(11,10)])
 train.Y=YNClassification[train_bool]
 test.Y=YNClassification[!train_bool]
 set.seed(1)
 knn.pred=knn(train.X,test.X,train.Y,k=1)
+
+#Confusion matrix
 table(knn.pred,YNClassification[!train_bool])
+#Accuracy
 Accuracy=mean(knn.pred==test.Y)
 test.error=mean(knn.pred!=test.Y)
 test.error=c()
@@ -73,22 +86,30 @@ plot(c(1,10,50,100,150,200,250),test.error)
 
 ### LDA
 
-library(MASS)
 lda.fit=lda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1)
 lda.pred=predict(lda.fit)
 lda.pred$posterior[,1]
 
-library(pROC)
+
+#ROC curve
 ROC.lda=roc(YNClassification,lda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.lda,print.auc =T,xlab="Specificity",col="red",axes=T)
 
 
 ### QDA
 
+qda.fit=qda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1)
+qda.pred=predict(qda.fit)
+qda.pred$posterior[,1]
+
+#ROC curve
+ROC.qda=roc(YNClassification,qda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
+plot.roc(ROC.qda,print.auc =T,xlab="Specificity",col="red",axes=T)
+
+
 
 ### Decision trees
 
-library(tree)
 tree.dataset=tree(YNClassification ~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,dataset ,subset=train_ind)
 summary(tree.dataset)
 plot(tree.dataset)
@@ -97,5 +118,4 @@ text(tree.dataset,pretty=0)
 
 ### Support Vector Machine
 
-library("e1071")
-
+set.seed(1)
