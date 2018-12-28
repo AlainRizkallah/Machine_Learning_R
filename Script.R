@@ -35,9 +35,11 @@ summary(log2.fit)
 log2.probs=predict(log2.fit,newdata = test,type="response")
 log2.pred=rep("Healthy control",nrow(test))
 log2.pred[log2.probs>0.5]="Patient"
-table(log2.pred,test$Classification)
-mean(log2.pred==test$Classification) 
-mean(log2.pred!=test$Classification) # pourquoi il n'y a pas d'erreur? 
+
+test$YNClassification <- factor(test$Classification, levels=c(1,2), labels=c("Healthy control","Patient" ))
+table(log2.pred,test$YNClassification)
+mean(log2.pred==test$YNClassification) 
+mean(log2.pred!=test$YNClassification)
 
 # Model selection for logistic regression : 
 # Use model selection methods to select a pertinent 
