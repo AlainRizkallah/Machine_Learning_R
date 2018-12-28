@@ -3,6 +3,8 @@ library("e1071")
 library(class)
 library(tree)
 library(MASS)
+library(leaps)
+
 
 ### Exploratory analysis of the data set
 dataset=read.table(file = 'dataR2.csv',header = T, sep=",")
@@ -26,6 +28,7 @@ log.pred[log.probs>0.5]="Patient"
 table(log.pred,YNClassification)
 #Accuracy
 mean(log.pred==YNClassification)
+
 
 # Using a train and a test set
 
@@ -90,7 +93,10 @@ lda.fit=lda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Re
 lda.pred=predict(lda.fit)
 lda.pred$posterior[,1]
 
-
+#Confusion matrix
+table(lda.pred[["class"]],YNClassification)
+#Accuracy
+mean(lda.pred[["class"]]==test$YNClassification)
 #ROC curve
 ROC.lda=roc(YNClassification,lda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.lda,print.auc =T,xlab="Specificity",col="red",axes=T)
@@ -102,6 +108,10 @@ qda.fit=qda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Re
 qda.pred=predict(qda.fit)
 qda.pred$posterior[,1]
 
+#Confusion matrix
+table(qda.pred[["class"]],YNClassification)
+#Accuracy
+mean(qda.pred[["class"]]==test$YNClassification)
 #ROC curve
 ROC.qda=roc(YNClassification,qda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.qda,print.auc =T,xlab="Specificity",col="red",axes=T)
@@ -114,6 +124,12 @@ tree.dataset=tree(YNClassification ~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adipone
 summary(tree.dataset)
 plot(tree.dataset)
 text(tree.dataset,pretty=0)
+
+#Confusion matrix
+
+#Accuracy
+mean(tree.dataset[["y"]]==test$YNClassification)
+
 
 
 ### Support Vector Machine
