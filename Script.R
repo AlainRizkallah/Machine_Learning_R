@@ -88,7 +88,14 @@ plot.roc(ROC.lda,print.auc =T,xlab="Specificity",col="red",axes=T)
 
 ### Decision trees
 
+library(tree)
+tree.dataset=tree(YNClassification ~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,dataset ,subset=train_ind)
+summary(tree.dataset)
+plot(tree.dataset)
+text(tree.dataset,pretty=0)
+
 
 ### Support Vector Machine
 
+library("e1071")
 
