@@ -51,7 +51,28 @@ mean(log2.pred!=test$YNClassification)
 
 library(class)
 
+#TODO: standarize data + use all predictors, not only Glucosea
+
+train.X=as.matrix(Glucose[train_bool])
+test.X=as.matrix(Glucose[!train_bool])
+train.Y=YNClassification[train_bool]
+test.Y=YNClassification[!train_bool]
+set.seed(1)
+knn.pred=knn(train.X,test.X,train.Y,k=1)
+table(knn.pred,YNClassification[!train_bool])
+Accuracy=mean(knn.pred==test.Y)
+test.error=mean(knn.pred!=test.Y)
+test.error=c()
+for(i in c(1,10,50,100,150,200,250))
+{
+  set.seed(1)
+  knn.pred=knn(train.X,test.X,train.Y,k=i)
+  test.error=c(test.error,mean(knn.pred!=test.Y))
+}
+plot(c(1,10,50,100,150,200,250),test.error)
+
 ### LDA
+
 
 
 ### QDA
