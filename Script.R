@@ -11,12 +11,17 @@ dataset=read.table(file = 'dataR2.csv',header = T, sep=",")
 attach(dataset)
 summary(dataset)
 plot(dataset)
-cor(dataset)
+#Correlation
+cor(dataset[,c(0:9)])
+
+#Redefine the variable to predict
+YNClassification <- factor(Classification, levels=c(1,2), labels=c("Healthy control","Patient" ))
+
 
 ### Logistic regression
-YNClassification <- factor(Classification, levels=c(1,2), labels=c("Healthy control","Patient" ))
 log.fit=glm(YNClassification~Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,data=dataset,family = binomial)
 summary(log.fit)
+
 
 log.probs=predict(log.fit,type="response")
 log.probs[1:10] # To visualize the first 10 values.
@@ -28,6 +33,19 @@ log.pred[log.probs>0.5]="Patient"
 table(log.pred,YNClassification)
 #Accuracy
 mean(log.pred==YNClassification)
+
+#Optimisation
+
+logOpt.fit=glm(YNClassification~Age+BMI+Glucose+Insulin+Leptin+Resistin+MCP.1,data=dataset,family = binomial)
+
+logOpt.probs=predict(logOpt.fit,type="response")
+logOpt.pred=rep("Healthy control",nrow(dataset))
+logOpt.pred[logOpt.probs>0.5]="Patient"
+
+#Confusion matrix
+table(log1.pred,YNClassification)
+#Accuracy
+mean(log1.pred==YNClassification)
 
 
 # Using a train and a test set
@@ -43,6 +61,7 @@ train_bool[train_ind]=TRUE
 test <- dataset[-train_ind, ]
 
 log2.fit=glm(YNClassification ~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,data=dataset,family = binomial,subset=train_bool)
+
 summary(log2.fit)
 log2.probs=predict(log2.fit,newdata = test,type="response")
 log2.pred=rep("Healthy control",nrow(test))
@@ -53,7 +72,7 @@ test$YNClassification <- factor(test$Classification, levels=c(1,2), labels=c("He
 table(log2.pred,test$YNClassification)
 #Accuracy
 mean(log2.pred==test$YNClassification)
-mean(log2.pred!=test$YNClassification)
+#mean(log2.pred!=test$YNClassification)
 
 # Model selection for logistic regression : 
 # Use model selection methods to select a pertinent 
@@ -79,13 +98,14 @@ table(knn.pred,YNClassification[!train_bool])
 Accuracy=mean(knn.pred==test.Y)
 test.error=mean(knn.pred!=test.Y)
 test.error=c()
-for(i in c(1,10,50,100,150,200,250))
+NB_MOTIFS = 87
+for(i in seq(1,NB_MOTIFS,NB_MOTIFS/6))
 {
   set.seed(1)
   knn.pred=knn(train.X,test.X,train.Y,k=i)
   test.error=c(test.error,mean(knn.pred!=test.Y))
 }
-plot(c(1,10,50,100,150,200,250),test.error)
+plot(seq(1,NB_MOTIFS,NB_MOTIFS/6),test.error)
 
 ### LDA
 
@@ -135,3 +155,26 @@ mean(tree.dataset[["y"]]==test$YNClassification)
 ### Support Vector Machine
 
 set.seed(1)
+
+#Feature Selection
+
+regfit.full = regsubsets(YNClassification~.,dataset[,c(0:9)],nvmax=20,method="exhaustive")
+summary(regfit.full)
+reg.summary = summary(regfit.full)
+names(reg.summary)
+reg.summary$adjr2
+
+par(mfrow=c(2,2))
+plot(reg.summary$rss,xlab="Number of Variables",ylab="RSS",type="l")
+plot(reg.summary$adjr2,xlab="Number of Variables",ylab="Adjusted RSq",type="l")
+p=which.max(reg.summary$adjr2)
+paste("Adjusted RSq Best Number of Variable",p)
+points(p,reg.summary$adjr2[p], col="red",cex=2,pch=20)
+plot(reg.summary$cp,xlab="Number of Variables",ylab="Cp",type='l')
+p=which.min(reg.summary$cp)
+paste("Cp Best Number of Variable",p)
+points(p,reg.summary$cp[p],col="red",cex=2,pch=20)
+p=which.min(reg.summary$bic)
+paste("Cp Number of Variable",p)
+plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
+points(p,reg.summary$bic[p],col="red",cex=2,pch=20)
