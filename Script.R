@@ -155,17 +155,16 @@ mean(lda.pred.class==test.Y)
 
 ### QDA
 
-qda.fit=qda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1)
-qda.pred=predict(qda.fit)
-qda.pred$posterior[,1]
+qda.fit=qda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,subset = train_bool)
+qda.pred=predict(qda.fit,newdata = test,type="response")
 
-qda.pred=rep("Healthy control",nrow(dataset))
-qda.pred[qda.pred>0.5]="Patient"
+qda.pred.class = rep("Patient",nrow(test))
+qda.pred.class[qda.pred$posterior[,1]>0.5]="Healthy control"
 
 #Confusion matrix
-table(qda.pred,YNClassification)
+table(qda.pred.class,test$YNClassification)
 #Accuracy
-mean(qda.pred==YNClassification)
+mean(qda.pred.class==test.YNClassification)
 
 #ROC curve
 ROC.qda=roc(YNClassification,qda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
