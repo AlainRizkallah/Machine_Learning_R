@@ -85,27 +85,32 @@ mean(log2.pred==test$YNClassification)
 
 #TODO: standarize data ?
 
-train.X= as.matrix(train[,-c(11,10)])
-test.X= as.matrix(test[,-c(11,10)])
+train.X= as.matrix(train[,c(0:9)])
+test.X= as.matrix(test[,c(0:9)])
 train.Y=YNClassification[train_bool]
 test.Y=YNClassification[!train_bool]
 set.seed(1)
-knn.pred=knn(train.X,test.X,train.Y,k=1)
 
-#Confusion matrix
-table(knn.pred,YNClassification[!train_bool])
-#Accuracy
-Accuracy=mean(knn.pred==test.Y)
-test.error=mean(knn.pred!=test.Y)
 test.error=c()
 NB_MOTIFS = 87
-for(i in seq(1,NB_MOTIFS,NB_MOTIFS/6))
+sequence = seq(1,NB_MOTIFS,NB_MOTIFS/6) #seq(40,50,1)
+for(i in sequence)
 {
   set.seed(1)
   knn.pred=knn(train.X,test.X,train.Y,k=i)
   test.error=c(test.error,mean(knn.pred!=test.Y))
 }
-plot(seq(1,NB_MOTIFS,NB_MOTIFS/6),test.error)
+plot(sequence,test.error,xlab="Nombre de motifs")
+
+KOpt = 41#2
+knn.pred=knn(train.X,test.X,train.Y,k=KOpt)
+
+#Confusion matrix
+table(knn.pred,YNClassification[!train_bool])
+#Accuracy
+mean(knn.pred==test.Y)
+test.error=mean(knn.pred!=test.Y)
+test.error
 
 ### LDA
 
@@ -113,10 +118,14 @@ lda.fit=lda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Re
 lda.pred=predict(lda.fit)
 lda.pred$posterior[,1]
 
+lda.pred=rep("Healthy control",nrow(dataset))
+lda.pred[lda.pred>0.5]="Patient"
+
 #Confusion matrix
-table(lda.pred[["class"]],YNClassification)
+table(log.pred,YNClassification)
 #Accuracy
-mean(lda.pred[["class"]]==test$YNClassification)
+mean(log.pred==YNClassification)
+
 #ROC curve
 ROC.lda=roc(YNClassification,lda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.lda,print.auc =T,xlab="Specificity",col="red",axes=T)
@@ -128,10 +137,14 @@ qda.fit=qda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Re
 qda.pred=predict(qda.fit)
 qda.pred$posterior[,1]
 
+qda.pred=rep("Healthy control",nrow(dataset))
+qda.pred[qda.pred>0.5]="Patient"
+
 #Confusion matrix
-table(qda.pred[["class"]],YNClassification)
+table(log.pred,YNClassification)
 #Accuracy
-mean(qda.pred[["class"]]==test$YNClassification)
+mean(log.pred==YNClassification)
+
 #ROC curve
 ROC.qda=roc(YNClassification,qda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.qda,print.auc =T,xlab="Specificity",col="red",axes=T)
@@ -178,3 +191,4 @@ p=which.min(reg.summary$bic)
 paste("Cp Number of Variable",p)
 plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
 points(p,reg.summary$bic[p],col="red",cex=2,pch=20)
+
