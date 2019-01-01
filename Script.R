@@ -114,21 +114,43 @@ test.error
 
 ### LDA
 
-lda.fit=lda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1)
-lda.pred=predict(lda.fit)
-lda.pred$posterior[,1]
+lda.fit=lda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,data=dataset,subset = train_bool)
+lda.pred=predict(lda.fit,newdata = test,type="response")
 
-lda.pred=rep("Healthy control",nrow(dataset))
-lda.pred[lda.pred>0.5]="Patient"
 
-#Confusion matrix
-table(log.pred,YNClassification)
-#Accuracy
-mean(log.pred==YNClassification)
+par(mfrow=c(1,2))
+TPR = c()
+TNR = c()
+accList = c()
+alphaList = seq(0.1,1,0.01)
+for(alpha in alphaList){
+  #crée un vecteur  qui contient la valeur prédite pour une aleur donnée (initialisé à R)
+  lda.pred.class = rep("Patient",nrow(test))
+  #Modifie le seuil de probabilité pour prédire G
+  #Change si la probabilité d'obtenir G est >alpha (O.5 par défaut)
+  lda.pred.class[lda.pred$posterior[,1]>alpha]="Healthy control"
+  #sensitivity ou TPR (True positive Rate)
+  sensitivity = sum(lda.pred.class=="Healthy control" & test$YNClassification=="Healthy control")/sum(test$YNClassification=="Healthy control")
+  TPR = c(TPR,sensitivity)
+  #1-specificity ou TNR (True negative Rate)
+  specificity = sum(lda.pred.class=="Patient" & test$YNClassification=="Patient")/sum(test$YNClassification=="Patient")
+  TNR = c(TNR,specificity)
+  accList = c(accList,mean(lda.pred.class==test$YNClassification))
+}
 
+plot(TNR,TPR,type="b",ylim=c(0,1),xlim = c(1,0))
+plot(alphaList,accList,type="b")
 #ROC curve
-ROC.lda=roc(YNClassification,lda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
+ROC.lda=roc(test$YNClassification,lda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.lda,print.auc =T,xlab="Specificity",col="red",axes=T)
+
+
+lda.pred.class = rep("Patient",nrow(test))
+lda.pred.class[lda.pred$posterior[,1]>0.4]="Healthy control"
+#Confusion matrix
+table(lda.pred.class,test$YNClassification)
+#Accuracy
+mean(lda.pred.class==test.Y)
 
 
 ### QDA
@@ -141,9 +163,9 @@ qda.pred=rep("Healthy control",nrow(dataset))
 qda.pred[qda.pred>0.5]="Patient"
 
 #Confusion matrix
-table(log.pred,YNClassification)
+table(qda.pred,YNClassification)
 #Accuracy
-mean(log.pred==YNClassification)
+mean(qda.pred==YNClassification)
 
 #ROC curve
 ROC.qda=roc(YNClassification,qda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
