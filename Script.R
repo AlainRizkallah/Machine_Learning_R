@@ -14,8 +14,11 @@ plot(dataset)
 #Correlation
 cor(dataset[,c(0:9)])
 
+
 #Redefine the variable to predict
 YNClassification <- factor(Classification, levels=c(1,2), labels=c("Healthy control","Patient" ))
+sum(YNClassification=="Patient")
+sum(YNClassification=="Healthy control")
 
 
 ### Logistic regression
@@ -43,9 +46,9 @@ logOpt.pred=rep("Healthy control",nrow(dataset))
 logOpt.pred[logOpt.probs>0.5]="Patient"
 
 #Confusion matrix
-table(log1.pred,YNClassification)
+table(logOpt.pred,YNClassification)
 #Accuracy
-mean(log1.pred==YNClassification)
+mean(logOpt.pred==YNClassification)
 
 
 # Using a train and a test set
@@ -63,7 +66,7 @@ test <- dataset[-train_ind, ]
 log2.fit=glm(YNClassification ~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,data=dataset,family = binomial,subset=train_bool)
 
 summary(log2.fit)
-log2.probs=predict(log2.fit,newdata = test,type="response")
+log2.probs=predict(log2.fit,newdata = test,type="response",probability = TRUE)
 log2.pred=rep("Healthy control",nrow(test))
 log2.pred[log2.probs>0.5]="Patient"
 
@@ -72,7 +75,10 @@ test$YNClassification <- factor(test$Classification, levels=c(1,2), labels=c("He
 table(log2.pred,test$YNClassification)
 #Accuracy
 mean(log2.pred==test$YNClassification)
+
 #mean(log2.pred!=test$YNClassification)
+ROC.log=roc(YNClassification,log.probs,levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
+plot.roc(ROC.log,print.auc =T,xlab="Specificity",col="red",axes=T)
 
 # Model selection for logistic regression : 
 # Use model selection methods to select a pertinent 
@@ -81,7 +87,6 @@ mean(log2.pred==test$YNClassification)
 # to choose the best level of flexibility
 
 ### KNN
-
 
 #TODO: standarize data ?
 
@@ -112,6 +117,9 @@ mean(knn.pred==test.Y)
 test.error=mean(knn.pred!=test.Y)
 test.error
 
+
+
+
 ### LDA
 
 lda.fit=lda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,data=dataset,subset = train_bool)
@@ -141,6 +149,7 @@ for(alpha in alphaList){
 plot(TNR,TPR,type="b",ylim=c(0,1),xlim = c(1,0))
 plot(alphaList,accList,type="b")
 #ROC curve
+lda.pred.class = rep("Patient",nrow(test))
 ROC.lda=roc(test$YNClassification,lda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.lda,print.auc =T,xlab="Specificity",col="red",axes=T)
 
