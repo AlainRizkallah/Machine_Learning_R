@@ -167,17 +167,40 @@ mean(lda.pred.class==test.Y)
 qda.fit=qda(YNClassification~ Age+BMI+Glucose+Insulin+HOMA+Leptin+Adiponectin+Resistin+MCP.1,subset = train_bool)
 qda.pred=predict(qda.fit,newdata = test,type="response")
 
+par(mfrow=c(1,2))
+TPR = c()
+TNR = c()
+accList = c()
+alphaList = seq(0.1,1,0.01)
+for(alpha in alphaList){
+  #crée un vecteur  qui contient la valeur prédite pour une aleur donnée (initialisé à R)
+  qda.pred.class = rep("Patient",nrow(test))
+  #Modifie le seuil de probabilité pour prédire G
+  #Change si la probabilité d'obtenir G est >alpha (O.5 par défaut)
+  qda.pred.class[qda.pred$posterior[,1]>alpha]="Healthy control"
+  #sensitivity ou TPR (True positive Rate)
+  sensitivity = sum(qda.pred.class=="x²Healthy control" & test$YNClassification=="Healthy control")/sum(test$YNClassification=="Healthy control")
+  TPR = c(TPR,sensitivity)
+  #1-specificity ou TNR (True negative Rate)
+  specificity = sum(qda.pred.class=="Patient" & test$YNClassification=="Patient")/sum(test$YNClassification=="Patient")
+  TNR = c(TNR,specificity)
+  accList = c(accList,mean(qda.pred.class==test$YNClassification))
+}
+#plot(TNR,TPR,type="b",ylim=c(0,1),xlim = c(1,0))
+plot(alphaList,accList,type="b")
+
 qda.pred.class = rep("Patient",nrow(test))
-qda.pred.class[qda.pred$posterior[,1]>0.5]="Healthy control"
+qda.pred.class[qda.pred$posterior[,1]>0.9]="Healthy control"
 
 #Confusion matrix
 table(qda.pred.class,test$YNClassification)
 #Accuracy
-mean(qda.pred.class==test.YNClassification)
+mean(qda.pred.class==test$YNClassification)
 
 #ROC curve
 ROC.qda=roc(YNClassification,qda.pred$posterior[,1],levels=c("Healthy control","Patient"), thresholds=seq(0.1,1,0.1))
 plot.roc(ROC.qda,print.auc =T,xlab="Specificity",col="red",axes=T)
+
 
 
 
