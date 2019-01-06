@@ -227,7 +227,6 @@ set.seed(1)
 regfit.full = regsubsets(YNClassification~.,dataset[,c(0:9)],nvmax=20,method="exhaustive")
 summary(regfit.full)
 reg.summary = summary(regfit.full)
-names(reg.summary)
 reg.summary$adjr2
 
 par(mfrow=c(2,2))
