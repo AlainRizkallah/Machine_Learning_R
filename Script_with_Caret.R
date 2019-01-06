@@ -26,7 +26,7 @@ presentation=function(res){
     if (n!="ROC"){
       print(res[n])
     }else{
-      plot.roc(res$ROC,print.auc =T,xlab="Specificity",col="red",axes=T)
+      plot.roc(res$ROC,print.auc =T,xlab="Specificity",col="red",axes=T,print.thres = "best")
     }
   }
 }
@@ -122,7 +122,7 @@ QDA =train(opt_formula,data=train_set,method="qda",metric = "Accuracy", trContro
 QDA.res = getResult(QDA)
 presentation(QDA.res)
 
-# Decision trees
+# Random Forest
 #grid search
 tunegrid <- expand.grid(.mtry=c(1:15))
 dtree = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tunegrid=tunegrid,ntree = 100)
@@ -139,6 +139,8 @@ plot(dtree)
 print(dtree)
 dtree.res = getResult(dtree,FALSE)
 presentation(dtree.res)
+
+
 
 
 #Optimisation
