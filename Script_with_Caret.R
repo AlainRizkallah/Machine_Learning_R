@@ -72,20 +72,17 @@ points(p,reg.summary$bic[p],col="red",cex=2,pch=20)
 
 opt_formula = YNClassification~Age+BMI+Glucose+Insulin+HOMA+Resistin
 
-
+model_list = c()
 
 # GLM
 log=train(full_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
 log.res = getResult(log)
 presentation(log.res)
 
-
-
 #Optimisation
-OptLog = train(opt_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
-OptLog.res = getResult(OptLog)
-presentation(OptLog.res)
-
+log_opt = train(opt_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
+log_opt.res = getResult(log_opt)
+presentation(log_opt.res)
 #KNN
 K_Max = nrow(train_set)/2
 knn=train(full_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control,preProcess="pca")
@@ -94,53 +91,51 @@ knn.res = getResult(knn)
 presentation(knn.res)
 
 #Optimisation
-knn=train(opt_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control,preProcess="pca")
-plot(knn)
-knn.res = getResult(knn)
-presentation(knn.res)
+knn_opt=train(opt_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control,preProcess="pca")
+plot(knn_opt)
+knn_opt.res = getResult(knn_opt)
+presentation(knn_opt.res)
 
 #LDA
 #lda2 has tuning parameters
-LDA =train(full_formula,data=train_set,method="lda2",tuneGrid=expand.grid(dimen=1:5),metric = "Accuracy", trControl=train_control,preProcess="pca")
+LDA =train(full_formula,data=train_set,method="lda2",tuneGrid=expand.grid(dimen=1:5),metric = "Accuracy", trControl=train_control)
 plot(LDA)
 LDA.res = getResult(LDA)
 presentation(LDA.res)
 
 #Optimisation
-LDA =train(opt_formula,data=train_set,method="lda2",tuneGrid=expand.grid(dimen=1:5),metric = "Accuracy", trControl=train_control,preProcess="pca")
-plot(LDA)
-LDA.res = getResult(LDA)
-presentation(LDA.res)
+LDA_opt =train(opt_formula,data=train_set,method="lda2",tuneGrid=expand.grid(dimen=1:5),metric = "Accuracy", trControl=train_control,preProcess=c("scale","center"))
+plot(LDA_opt)
+LDA_opt.res = getResult(LDA_opt)
+presentation(LDA_opt.res)
 
 #QDA
-QDA =train(full_formula,data=train_set,method="qda",metric = "Accuracy", trControl=train_control,preProcess="pca")
+QDA =train(full_formula,data=train_set,method="qda",metric = "Accuracy", trControl=train_control)
 QDA.res = getResult(QDA)
 presentation(QDA.res)
 
 #Optimisation
-QDA =train(opt_formula,data=train_set,method="qda",metric = "Accuracy", trControl=train_control,preProcess="pca")
-QDA.res = getResult(QDA)
-presentation(QDA.res)
+QDA_opt =train(full_formula,data=train_set,method="qda",metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
+QDA_opt.res = getResult(QDA_opt)
+presentation(QDA_opt.res)
 
 # Random Forest
 #grid search
 tunegrid <- expand.grid(.mtry=c(1:15))
-dtree = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tunegrid=tunegrid,ntree = 100)
-plot(dtree$finalModel)
-plot(dtree)
-print(dtree)
-dtree.res = getResult(dtree,FALSE)
-presentation(dtree.res)
+dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tunegrid=tunegrid,ntree = 100)
+plot(dtree_gd$finalModel)
+plot(dtree_gd)
+print(dtree_gd)
+dtree_gd.Res = getResult(dtree_gd,FALSE)
+presentation(dtree_gd.res)
 
 #random search
-dtree = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=8,ntree = 100)
-plot(dtree$finalModel)
-plot(dtree)
-print(dtree)
-dtree.res = getResult(dtree,FALSE)
-presentation(dtree.res)
+dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=8,ntree = 100)
+plot(dtree_rs$finalModel)
+plot(dtree_rs)
+print(dtree_rs)
+dtree_rs.res = getResult(dtree_rs,FALSE)
+presentation(dtree_rs.res)
 
+model_list = c(log_opt,knn_opt,LDA_opt,QDA_opt,dtree_gd,dtree_rs)
 
-
-
-#Optimisation
