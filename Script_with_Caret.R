@@ -53,8 +53,12 @@ YNClassification <- factor(Classification, levels=c(1,2), labels=c("Healthycontr
 train_set$YNClassification =YNClassification
 
 #cross validation
-train_control = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T)
-
+seeds = vector(mode = "list", length = nrows(train_set) + 1)
+seeds = lapply(seeds, function(x) 1:40)
+train_control = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T,seeds=seeds)
+seeds = vector(mode = "list", length = 25 + 1)
+seeds = lapply(seeds, function(x) 1:40)#nrows(train_set)/2
+train_control_knn = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T,seeds=seeds)
 
 #Formulas
 
@@ -87,7 +91,7 @@ opt_formula = YNClassification~Age+BMI+Glucose+Insulin+HOMA+Resistin
 model_list = c()
 
 # GLM
-log=train(full_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
+log=train(full_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control)
 log.res = getResult(log)
 presentation(log.res)
 getAccuracyFromTable(log.res)
@@ -100,14 +104,14 @@ getAccuracyFromTable(log_opt.res)
 
 #KNN
 K_Max = 40 #nrow(train_set)/2
-knn=train(full_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control,preProcess="pca")
+knn=train(full_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control_knn,preProcess="pca")
 plot(knn)
 knn.res = getResult(knn)
 presentation(knn.res)
 getAccuracyFromTable(knn.res)
 
 #Optimisation
-knn_opt=train(opt_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control,preProcess="pca")
+knn_opt=train(opt_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control_knn,preProcess="pca")
 plot(knn_opt)
 knn_opt.res = getResult(knn_opt)
 presentation(knn_opt.res)
@@ -149,7 +153,6 @@ plot(dtree_gd)
 print(dtree_gd)
 dtree_gd.res = getResult(dtree_gd,FALSE)
 presentation(dtree_gd.res)
-getAccuracyFromTable(dtree_gd.res)
 
 #random search
 dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=8,ntree = 100)
@@ -158,11 +161,9 @@ plot(dtree_rs)
 print(dtree_rs)
 dtree_rs.res = getResult(dtree_rs,FALSE)
 presentation(dtree_rs.res)
-getAccuracyFromTable(dtree_rs.res)
 
 accuracy_list = c(getMaxAccuracy(log_opt),getMaxAccuracy(knn_opt),getMaxAccuracy(LDA_opt),getMaxAccuracy(QDA_opt),getMaxAccuracy(dtree_gd),getMaxAccuracy(dtree_rs))
 model_list=c("glm","knn","LDA","QDA","rf_gs","rf_rs")
 df_accuracy = data.frame(model_list,accuracy_list)
 plot(df_accuracy)
 df_accuracy
-
