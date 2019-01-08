@@ -21,6 +21,17 @@ getResult = function(model,isDoROC=TRUE){
   }
   return(res)
 }
+getAccuracyFromTable = function(model.res){
+  table = model.res$table
+  healthy = table[1]/(table[1]+table[2])
+  patient = table[4]/(table[3]+table[4])
+  return(c(healthy,patient))
+}
+getMaxAccuracy = function(model){
+  n = model$method
+  n= max(model$results$Accuracy)
+  return (n)
+}
 presentation=function(res){
   for (n in names(res)){
     if (n!="ROC"){
@@ -36,13 +47,14 @@ cor(dataset[,c(0:9)])
 
 set.seed(42)
 
-#cross validation
-train_control = trainControl(method  = "repeatedcv",number  = 5, repeats=5,classProbs = TRUE,savePredictions = T)
-
 #Building train dataset
 train_set = dataset[,c(0:9)]
 YNClassification <- factor(Classification, levels=c(1,2), labels=c("Healthycontrol","Patient" ))
 train_set$YNClassification =YNClassification
+
+#cross validation
+train_control = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T)
+
 
 #Formulas
 
@@ -78,23 +90,28 @@ model_list = c()
 log=train(full_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
 log.res = getResult(log)
 presentation(log.res)
+getAccuracyFromTable(log.res)
 
 #Optimisation
 log_opt = train(opt_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
 log_opt.res = getResult(log_opt)
 presentation(log_opt.res)
+getAccuracyFromTable(log_opt.res)
+
 #KNN
-K_Max = nrow(train_set)/2
+K_Max = 40 #nrow(train_set)/2
 knn=train(full_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control,preProcess="pca")
 plot(knn)
 knn.res = getResult(knn)
 presentation(knn.res)
+getAccuracyFromTable(knn.res)
 
 #Optimisation
 knn_opt=train(opt_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control,preProcess="pca")
 plot(knn_opt)
 knn_opt.res = getResult(knn_opt)
 presentation(knn_opt.res)
+getAccuracyFromTable(knn_opt.res)
 
 #LDA
 #lda2 has tuning parameters
@@ -102,22 +119,26 @@ LDA =train(full_formula,data=train_set,method="lda2",tuneGrid=expand.grid(dimen=
 plot(LDA)
 LDA.res = getResult(LDA)
 presentation(LDA.res)
+getAccuracyFromTable(LDA.res)
 
 #Optimisation
 LDA_opt =train(opt_formula,data=train_set,method="lda2",tuneGrid=expand.grid(dimen=1:5),metric = "Accuracy", trControl=train_control,preProcess=c("scale","center"))
 plot(LDA_opt)
 LDA_opt.res = getResult(LDA_opt)
 presentation(LDA_opt.res)
+getAccuracyFromTable(LDA_opt.res)
 
 #QDA
 QDA =train(full_formula,data=train_set,method="qda",metric = "Accuracy", trControl=train_control)
 QDA.res = getResult(QDA)
 presentation(QDA.res)
+getAccuracyFromTable(QDA.res)
 
 #Optimisation
 QDA_opt =train(full_formula,data=train_set,method="qda",metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
 QDA_opt.res = getResult(QDA_opt)
 presentation(QDA_opt.res)
+getAccuracyFromTable(QDA_opt.res)
 
 # Random Forest
 #grid search
@@ -126,8 +147,9 @@ dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf"
 plot(dtree_gd$finalModel)
 plot(dtree_gd)
 print(dtree_gd)
-dtree_gd.Res = getResult(dtree_gd,FALSE)
+dtree_gd.res = getResult(dtree_gd,FALSE)
 presentation(dtree_gd.res)
+getAccuracyFromTable(dtree_gd.res)
 
 #random search
 dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=8,ntree = 100)
@@ -136,6 +158,11 @@ plot(dtree_rs)
 print(dtree_rs)
 dtree_rs.res = getResult(dtree_rs,FALSE)
 presentation(dtree_rs.res)
+getAccuracyFromTable(dtree_rs.res)
 
-model_list = c(log_opt,knn_opt,LDA_opt,QDA_opt,dtree_gd,dtree_rs)
+accuracy_list = c(getMaxAccuracy(log_opt),getMaxAccuracy(knn_opt),getMaxAccuracy(LDA_opt),getMaxAccuracy(QDA_opt),getMaxAccuracy(dtree_gd),getMaxAccuracy(dtree_rs))
+model_list=c("glm","knn","LDA","QDA","rf_gs","rf_rs")
+df_accuracy = data.frame(model_list,accuracy_list)
+plot(df_accuracy)
+df_accuracy
 
