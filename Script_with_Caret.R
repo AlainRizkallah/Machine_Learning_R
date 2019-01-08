@@ -5,6 +5,7 @@ library(tree)
 library(MASS)
 library(leaps)
 library(caret)
+library(randomForest)
 
 dataset=read.table(file = 'dataR2.csv',header = T, sep=",")
 attach(dataset)
@@ -146,23 +147,25 @@ presentation(QDA_opt.res)
 getAccuracyFromTable(QDA_opt.res)
 
 # Random Forest
+
+#random search
+
+dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=8,trControl=train_control_random,ntree=100)
+plot(dtree_rs$finalModel)
+plot(dtree_rs)
+print(dtree_rs)
+dtree_rs.res = getResult(dtree_rs,FALSE)
+presentation(dtree_rs.res)
+
 #grid search
-tunegrid <- expand.grid(.mtry=c(1:9))
-dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=30,tunegrid=tunegrid,ntree = 100,trControl=train_control)
+tunegrid <- expand.grid(.mtry = c(sqrt(ncol(dataset))))
+dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tunegrid=tunegrid,trControl=train_control,ntree=100)
 plot(dtree_gd$finalModel)
 plot(dtree_gd)
 print(dtree_gd)
 dtree_gd.res = getResult(dtree_gd,FALSE)
 presentation(dtree_gd.res)
 
-#random search
-
-dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=30,tunegrid=tunegrid,ntree = 100,trControl=train_control_random)
-plot(dtree_rs$finalModel)
-plot(dtree_rs)
-print(dtree_rs)
-dtree_rs.res = getResult(dtree_rs,FALSE)
-presentation(dtree_rs.res)
 
 accuracy_list = c(getMaxAccuracy(log_opt),getMaxAccuracy(knn_opt),getMaxAccuracy(LDA_opt),getMaxAccuracy(QDA_opt),getMaxAccuracy(dtree_gd),getMaxAccuracy(dtree_rs))
 model_list=c("glm","knn","LDA","QDA","rf_gs","rf_rs")
