@@ -211,6 +211,24 @@ summary(tree.dataset)
 plot(tree.dataset)
 text(tree.dataset,pretty=0)
 
+dataset.test=dataset[-train_ind,]
+dataset.train=dataset[train_ind,]
+YNClassification.test=YNClassification[-train_ind]
+tree.pred=predict(tree.dataset, dataset.test,type="class")
+table(tree.pred,YNClassification.test)
+
+##Cross validation
+cv.dataset=cv.tree(tree.dataset, FUN=prune.misclass, K=5)
+plot(cv.dataset$size ,cv.dataset$dev ,type='b')
+
+prune.dataset=prune.misclass(tree.dataset, best=3)
+summary(prune.dataset)
+plot(prune.dataset)
+text(prune.dataset,pretty=0)
+tree.pred=predict(prune.dataset,dataset.test, type="class")
+table(tree.pred,YNClassification.test)
+
+plot(tree.pred)
 #Confusion matrix
 
 #Accuracy
