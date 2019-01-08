@@ -147,16 +147,17 @@ getAccuracyFromTable(QDA_opt.res)
 
 # Random Forest
 #grid search
-tunegrid <- expand.grid(.mtry=c(1:8))
-dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=c(1:18),tunegrid=tunegrid,ntree = 100,trControl=train_control)
+tunegrid <- expand.grid(.mtry=c(1:9))
+dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=30,tunegrid=tunegrid,ntree = 100,trControl=train_control)
 plot(dtree_gd$finalModel)
 plot(dtree_gd)
+print(dtree_gd)
 dtree_gd.res = getResult(dtree_gd,FALSE)
 presentation(dtree_gd.res)
 
 #random search
 
-dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=c(1:18),tunegrid=tunegrid,ntree = 100,trControl=train_control_random)
+dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=30,tunegrid=tunegrid,ntree = 100,trControl=train_control_random)
 plot(dtree_rs$finalModel)
 plot(dtree_rs)
 print(dtree_rs)
