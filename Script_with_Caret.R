@@ -55,10 +55,11 @@ train_set$YNClassification =YNClassification
 #cross validation
 seeds = vector(mode = "list", length = nrows(train_set) + 1)
 seeds = lapply(seeds, function(x) 1:40)
-train_control = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T,seeds=seeds)
-seeds = vector(mode = "list", length = 25 + 1)
-seeds = lapply(seeds, function(x) 1:40)#nrows(train_set)/2
-train_control_knn = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T,seeds=seeds)
+train_control = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T,seeds=seeds,search="grid")
+seeds_knn = vector(mode = "list", length = 25 + 1)
+seeds_knn = lapply(seeds_knn, function(x) 1:40)#nrows(train_set)/2
+train_control_knn = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T,seeds=seeds_knn,search="grid")
+train_control_random = trainControl(method  = "repeatedcv",number  = 5,repeats = 5,classProbs = TRUE,savePredictions = T,seeds=seeds,search="random")
 
 #Formulas
 
@@ -86,18 +87,18 @@ paste("Cp Number of Variable",p)
 plot(reg.summary$bic,xlab="Number of Variables",ylab="BIC",type='l')
 points(p,reg.summary$bic[p],col="red",cex=2,pch=20)
 
-opt_formula = YNClassification~Age+BMI+Glucose+Insulin+HOMA+Resistin
+opt_formula = YNClassification~BMI+Glucose+Insulin+HOMA+Resistin
 
 model_list = c()
 
 # GLM
-log=train(full_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control)
+log=train(full_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
 log.res = getResult(log)
 presentation(log.res)
 getAccuracyFromTable(log.res)
 
 #Optimisation
-log_opt = train(opt_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca"))
+log_opt = train(opt_formula,data=train_set,method="glm", metric = "Accuracy", trControl=train_control,preProcess=c("pca","scale"))
 log_opt.res = getResult(log_opt)
 presentation(log_opt.res)
 getAccuracyFromTable(log_opt.res)
@@ -111,7 +112,7 @@ presentation(knn.res)
 getAccuracyFromTable(knn.res)
 
 #Optimisation
-knn_opt=train(opt_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control_knn,preProcess="pca")
+knn_opt=train(opt_formula,data=train_set,method="knn", tuneGrid=expand.grid(k=1:K_Max),metric = "Accuracy", trControl=train_control_knn,preProcess=c("pca"))
 plot(knn_opt)
 knn_opt.res = getResult(knn_opt)
 presentation(knn_opt.res)
@@ -146,16 +147,16 @@ getAccuracyFromTable(QDA_opt.res)
 
 # Random Forest
 #grid search
-tunegrid <- expand.grid(.mtry=c(1:15))
-dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tunegrid=tunegrid,ntree = 100)
+tunegrid <- expand.grid(.mtry=c(1:8))
+dtree_gd = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=c(1:18),tunegrid=tunegrid,ntree = 100,trControl=train_control)
 plot(dtree_gd$finalModel)
 plot(dtree_gd)
-print(dtree_gd)
 dtree_gd.res = getResult(dtree_gd,FALSE)
 presentation(dtree_gd.res)
 
 #random search
-dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=8,ntree = 100)
+
+dtree_rs = train(full_formula,data = train_set,metric = "Accuracy",method = "rf",tuneLenght=c(1:18),tunegrid=tunegrid,ntree = 100,trControl=train_control_random)
 plot(dtree_rs$finalModel)
 plot(dtree_rs)
 print(dtree_rs)
